@@ -43,7 +43,6 @@ class HolisticDetector:
         """
         @param
         """
-
         # Shows the frame
         cv.imshow("MediaPipe Holistic", stream)
     
@@ -98,39 +97,19 @@ class HolisticDetector:
         """
         @param
         """
-        # Creates blank arrays
-        lh   = []
-        rh   = []
-        pose = []
-        face = []
-
-        # Checks is the left_hand_landmarks array is 
-        if (self.results.left_hand_landmarks is not None):
-            lh = np.array([[result.x, result.y, result.z] for result in self.results.left_hand_landmarks.landmark]).flatten()
-        else:
-            lh = np.zeros(21 * 3)
-
-        # Checks is the right_hand_landmarks array is blank
-        if (self.results.right_hand_landmarks is not None):
-            rh = np.array([[result.x, result.y, result.z] for result in self.results.right_hand_landmarks.landmark]).flatten()
-        else:
-            rh = np.zeros(21 * 3)
-
-        # Checks is the pose_landmarks array is blank
-        if (self.results.pose_landmarks is not None):
-            pose = np.array([[result.x, result.y, result.z, result.visibility] for result in self.results.pose_landmarks.landmark]).flatten()
-        else:
-            pose = np.zeros(33 * 4)
-
-        # Checks is the pose_landmarks array is blank
-        if (self.results.face_landmarks is not None):
-            face = np.array([[result.x, result.y, result.z] for result in self.results.face_landmarks.landmark]).flatten()
-        else:
-            face = np.zeros(486 * 3)
-
+        # Extracts the keypoint data
+        pose = np.array([[res.x, res.y, res.z, res.visibility] for res in self.results.pose_landmarks.landmark]).flatten() if self.results.pose_landmarks else np.zeros(33*4)
+        face = np.array([[res.x, res.y, res.z] for res in self.results.face_landmarks.landmark]).flatten() if self.results.face_landmarks else np.zeros(468*3)
+        lh   = np.array([[res.x, res.y, res.z] for res in self.results.left_hand_landmarks.landmark]).flatten() if self.results.left_hand_landmarks else np.zeros(21*3)
+        rh   = np.array([[res.x, res.y, res.z] for res in self.results.right_hand_landmarks.landmark]).flatten() if self.results.right_hand_landmarks else np.zeros(21*3)
+        
         return np.concatenate([pose, face, lh, rh])
 
     def collectFrames(self, stream, action, video, frame, delay):
+        # Flips the stream for display
+        stream = cv.flip(stream, 1)
+
+        # 
         if (frame == 0):
             cv.putText(stream, 'Beginning Collection', (120,200), 
                         cv.FONT_HERSHEY_SIMPLEX, 1, (0,255, 0), 4, cv.LINE_AA)

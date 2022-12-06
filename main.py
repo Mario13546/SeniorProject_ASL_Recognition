@@ -12,13 +12,36 @@ from directory import CreateStorage
 
 # Gets variables for data collection
 DATA_PATH    = os.path.join("MP_Data")
-action_list  = ["hello", "thanks", "iloveyou"] # List of gestures
-num_videos   = 30                              # Number of videos
-video_frames = 30                              # Frames per video
+action_list  = np.array(["hello", "thanks", "iloveyou"])  # List of set gestures
+num_videos   = 30  # Number of videos
+video_frames = 30  # Frames per video
 
 # Create a video capture
 camera = USBCamera(0)
 cap    = camera.getCapture()
+
+# Adding gestures on the fly
+print("Collecting data for "+ str(action_list.shape[0]) + " gestures." )
+add = input("Would you like to add more gestures? (Y/n) ")
+if (add == "Y"):
+    # Generates a blank array
+    temp = []
+
+    # Prompts number of gestures to add
+    num_add = input("How many gestures? ")
+
+    # Loops for the number of gestures to be added
+    for i in range(0, int(num_add)):
+        name = input("Gesture name. All lowercase and no spaces please. ")
+        temp.append(name)
+
+    # Adds the new gestures to the action list
+    action_list = np.array(temp)
+
+    print("Number of gestures increased to " + str(action_list.shape[0]))
+
+# Saves the action list to be called elsewhere
+np.save("actions", action_list)
 
 # Instance creation
 holistic  = HolisticDetector(cap)
