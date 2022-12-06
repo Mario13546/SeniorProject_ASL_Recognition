@@ -32,7 +32,7 @@ if (add == "Y"):
 
     # Loops for the number of gestures to be added
     for i in range(0, int(num_add)):
-        name = input("Gesture name. All lowercase and no spaces please. ")
+        name = input("Gesture name. All lowercase and no special characters please. ")
         temp.append(name)
 
     # Adds the new gestures to the action list
@@ -46,9 +46,6 @@ np.save("actions", action_list)
 # Instance creation
 holistic  = HolisticDetector(cap)
 directory = CreateStorage(action_list, DATA_PATH, num_videos, video_frames)
-
-# Prompt the delay time
-delay = input("How long to wait between collections (in seconds)? ")
 
 # Loop through actions
 for id, action in enumerate(action_list):
@@ -85,7 +82,7 @@ for id, action in enumerate(action_list):
                 holistic.drawLandmarks(stream)
 
                 # Frame collection
-                holistic.collectFrames(stream, action, video, frame, float(delay))
+                holistic.collectFrames(stream, action, video, frame, 2)
 
                 # Exports the data
                 npy_path = os.path.join(DATA_PATH, action, str(video), str(frame))
