@@ -4,9 +4,11 @@
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
+import tensorflow as tf
+from   time import sleep
 
 class HolisticDetector:
-    def __init__(self, capture) -> None:
+    def __init__(self, capture, detection = False) -> None:
         """
         Constructor for the HolisticDetector class.
         @param
@@ -14,8 +16,11 @@ class HolisticDetector:
         # Localizes the capture
         self.cap = capture
 
+        # Creates variables
+        self.sequence, self.sentence, self.predictions = [], [], []
+
         # Initializes the MediaPipe Holistic Solution
-        self.mp_holistic       = mp.solutions.holistic
+        self.mp_holistic = mp.solutions.holistic
         self.holistic    = self.mp_holistic.Holistic(static_image_mode = False,
                                                     model_complexity = 1,
                                                     smooth_landmarks = True,
@@ -28,6 +33,11 @@ class HolisticDetector:
         # Initializes the MediaPipe Drawing Solutions
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.mp_drawing        = mp.solutions.drawing_utils
+
+        # Builds a TensorFlow model if told to do so
+        if (detection == True):
+            sleep(1.5)
+            self.buildModel()
 
     def readCapture(self):
         """
@@ -105,7 +115,10 @@ class HolisticDetector:
         
         return np.concatenate([pose, face, lh, rh])
 
-    def collectFrames(self, stream, action, video, frame, delay):
+    def collectFrames(self, stream, action = "hello", video = 0, frame = 0, delay = 0):
+        """
+        @param
+        """
         # Flips the stream for display
         stream = cv.flip(stream, 1)
 
@@ -134,3 +147,101 @@ class HolisticDetector:
         """
         keypoints = self.extractKeypoints()
         np.save(path, keypoints)
+    
+    def buildModel(self):
+        """
+        @param
+        """
+        # Enter the model path
+        model_id = input("Enter model identifiers (after the asl_detection.). Do not include quotation marks or the file extension. ")
+
+        # Default model to load
+        if (len(model_id) < 5):
+            model_id = "default"
+
+        # Loads the model
+        try:
+            self.model = tf.keras.models.load_model("Selected Models/" + "asl_detection." + model_id + ".h5")
+        except:
+            self.model = tf.keras.models.load_model("Selected Models/asl_detection.default.h5")
+            pass
+    
+    def modelPredictions(self, keypoints, stream):
+        """
+        @param
+        """
+        # Defines variables
+        THRESHOLD = 0.50
+
+        # Gets the actions with valid data
+        actions = np.load("actions.npy")
+
+        # Adds the keypoints to the list
+        self.sequence.insert(0, keypoints)
+        self.sequence = self.sequence[:30]
+
+        # 
+        if len(self.sequence) == 30:
+            res = self.model.predict(np.expand_dims(self.sequence, axis = 0))[0]
+            print(actions[np.argmax(res)])
+        
+        return stream
+
+    def modelPredictions_adv(self, keypoints, stream):
+        """
+        @param
+        """
+        # Defines variables
+        THRESHOLD = 0.50
+
+        # Gets the actions with valid data
+        actions = np.load("actions.npy")
+
+        # Adds the keypoints to the list
+        self.sequence.append(keypoints)
+        self.sequence = self.sequence[-30:]
+
+        print(len(self.sequence))
+
+        # 
+        if len(self.sequence) == 30:
+            res = self.model.predict(np.expand_dims(self.sequence, axis = 0))[0]
+            print(actions[np.argmax(res)])
+            self.predictions.append(np.argmax(res))
+
+            # Visualizaton logic
+            if np.unique(self.predictions[-10:])[0] == np.argmax(res):
+                # Checks if a result is higher than the threshold 
+                if res[np.argmax(res)] > THRESHOLD: 
+
+                    # 
+                    if len(self.sentence) > 0: 
+                        if actions[np.argmax(res)] != self.sentence[-1]:
+                            self.sentence.append(actions[np.argmax(res)])
+                    else:
+                        self.sentence.append(actions[np.argmax(res)])
+
+            if len(self.sentence) > 5: 
+                self.sentence = self.sentence[-5:]
+
+            # Displays probabilities
+            stream = self.probDisplay(res, actions, stream)
+        
+        return stream
+
+    def probDisplay(self, res, actions, stream):
+        """
+        @param
+        """
+        # The all important color scheme
+        colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
+
+        # Copies the stream
+        output_stream = stream.copy()
+
+        # Adds the probabiltiy values
+        for num, prob in enumerate(res):
+            cv.rectangle(output_stream, (0, 60 + num * 40), (int(prob * 100), 90 + num * 40), colors[num], -1)
+            cv.putText  (output_stream, actions[num], (0, 85 + num * 40), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv.LINE_AA)
+            
+        return output_stream
