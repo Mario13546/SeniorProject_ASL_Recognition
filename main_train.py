@@ -82,7 +82,7 @@ for id, action in enumerate(action_list):
                 holistic.drawLandmarks(stream)
 
                 # Frame collection
-                holistic.collectFrames(stream, action, video, frame, 2)
+                holistic.collectFrames(stream, action, video, frame, 1.5)
 
                 # Exports the data
                 npy_path = os.path.join(DATA_PATH, action, str(video), str(frame))

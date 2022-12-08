@@ -51,16 +51,20 @@ class HolisticDetector:
     
     def showFrame(self, stream):
         """
-        @param
+        Displays the stream.
+        @param stream
         """
         # Shows the frame
         cv.imshow("MediaPipe Holistic", stream)
     
     def mpDetection(self, stream):
         """
-        Runs
+        Runs the MediaPipe holistic detection.
         @param
         """
+        # Mirrors the stream
+        stream = cv.flip(stream, 1)
+
         # 
         stream = cv.cvtColor(stream, cv.COLOR_BGR2RGB)
         stream.flags.writeable = False
@@ -119,11 +123,9 @@ class HolisticDetector:
         """
         @param
         """
-        # Flips the stream for display
-        stream = cv.flip(stream, 1)
-
         # 
         if (frame == 0):
+            # Prints a visual cue
             cv.putText(stream, 'Beginning Collection', (120,200), 
                         cv.FONT_HERSHEY_SIMPLEX, 1, (0,255, 0), 4, cv.LINE_AA)
             cv.putText(stream, 'Collecting frames for {} Video Number {}'.format(action, video), (15, 12), 
@@ -134,7 +136,8 @@ class HolisticDetector:
 
             # Waits
             cv.waitKey(int(delay * 1000))
-        else: 
+        else:
+            # Prints a visual marker
             cv.putText(stream, 'Collecting frames for {} Video Number {}'.format(action, video), (15, 12), 
                         cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv.LINE_AA)
 
@@ -170,38 +173,12 @@ class HolisticDetector:
         """
         @param
         """
-        # Defines variables
-        THRESHOLD = 0.50
-
-        # Gets the actions with valid data
-        actions = np.load("actions.npy")
-
-        # Adds the keypoints to the list
-        self.sequence.insert(0, keypoints)
-        self.sequence = self.sequence[:30]
-
-        # 
-        if len(self.sequence) == 30:
-            res = self.model.predict(np.expand_dims(self.sequence, axis = 0))[0]
-            print(actions[np.argmax(res)])
-        
-        return stream
-
-    def modelPredictions_adv(self, keypoints, stream):
-        """
-        @param
-        """
-        # Defines variables
-        THRESHOLD = 0.50
-
         # Gets the actions with valid data
         actions = np.load("actions.npy")
 
         # Adds the keypoints to the list
         self.sequence.append(keypoints)
         self.sequence = self.sequence[-30:]
-
-        print(len(self.sequence))
 
         # 
         if len(self.sequence) == 30:
@@ -211,9 +188,8 @@ class HolisticDetector:
 
             # Visualizaton logic
             if np.unique(self.predictions[-10:])[0] == np.argmax(res):
-                # Checks if a result is higher than the threshold 
-                if res[np.argmax(res)] > THRESHOLD: 
-
+                # Checks if a result is higher than a threshold value 
+                if res[np.argmax(res)] > .25: 
                     # 
                     if len(self.sentence) > 0: 
                         if actions[np.argmax(res)] != self.sentence[-1]:
@@ -236,12 +212,9 @@ class HolisticDetector:
         # The all important color scheme
         colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
 
-        # Copies the stream
-        output_stream = stream.copy()
-
         # Adds the probabiltiy values
         for num, prob in enumerate(res):
-            cv.rectangle(output_stream, (0, 60 + num * 40), (int(prob * 100), 90 + num * 40), colors[num], -1)
-            cv.putText  (output_stream, actions[num], (0, 85 + num * 40), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv.LINE_AA)
+            cv.rectangle(stream, (0, 60 + num * 40), (int(prob * 100), 90 + num * 40), colors[num], -1)
+            cv.putText  (stream, actions[num], (0, 85 + num * 40), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv.LINE_AA)
             
-        return output_stream
+        return stream
