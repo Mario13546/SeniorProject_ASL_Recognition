@@ -161,11 +161,16 @@ class HandDetector:
         Builds the model to use for predictions.
         """
         # Enter the model path
-        model_id = input("Enter model identifiers. Do not include quotation marks or the file extension. ")
+        # model_id = input("Enter model identifiers. Do not include quotation marks or the file extension. ")
+        model_id = ""
 
         # Default model to load
         if (len(model_id) < 5):
             model_id = "default"
+
+        # Loads the default model
+        self.model = tf.keras.models.load_model("Selected Models/mnist_detection.default.h5")
+        return
 
         # Loads the model
         try:
@@ -181,7 +186,7 @@ class HandDetector:
         @param allHands
         """
         # Gets the actions with valid data
-        labels = np.load("actions.npy")
+        labels = np.load("./labels.npy")
 
         # Checks if the allHands array is valid
         if (allHands is not None):
@@ -213,13 +218,12 @@ class HandDetector:
 
                 # Resizes the array to what the model is expecting
                 resizedFrame = np.array(frame).flatten().reshape((28, 28, 1))
-                # print(resizedFrame)
-                print(resizedFrame.shape)
+                resizedFrame = np.expand_dims(resizedFrame, axis = 0)
 
                 # Once the sequence length is 30
                 if (len(self.sequence) == 1):
                     #res = self.model.predict(np.expand_dims(self.sequence, axis = 0))[0]
-                    res = self.model.predict(resizedFrame)
+                    res = self.model.predict(resizedFrame)[0]
                     print(labels[np.argmax(res)])
                     self.predictions.append(np.argmax(res))
 
