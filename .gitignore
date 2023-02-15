@@ -130,5 +130,6 @@ dmypy.json
 
 # Ignore certain folders
 /Logs/
-/MNIST Models*/
 /UCF101*/
+/MNIST Models*/
+/MNIST Images*/
