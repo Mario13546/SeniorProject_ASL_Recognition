@@ -129,9 +129,7 @@ dmypy.json
 .pyre/
 
 # Ignore certain folders
-/Logs/
-/UCF101*/
-/MNIST Models*/
-/MNIST Images*/
-/asl_alphabet*/
-/*Data/
+/asl*/
+/Run*/
+/Ameri*/
+*.zip
